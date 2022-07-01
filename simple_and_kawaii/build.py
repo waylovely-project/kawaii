@@ -78,10 +78,20 @@ def build_deps():
     if deps_missing:
         exit(1)
 
-    if len(projects_with_deps) != 0:
-        raise Exception(
-            f"Oh no!!! It seems we are left with some cylic dependencies!! {projects_with_deps}"
+    if count != len(projects):
+
+        def output_deps(project: Tuple[str, Project]):
+            name = f" {project.name} "
+            if projects in projects_with_deps:
+                name = click.style(name, fg="white", bg="red")
+
+            return name + " ⇒  " + " ".join(project.deps)
+
+        tree = "\n".join(map(output_deps, projects.values()))
+        click.echo(
+            f"Oh nooo! Found some cyclic dependencies. \n\nHere is the dependency tree:\n{tree}",
         )
+        exit(1)
 
     for project in projects_order:
         print(project.path)
