@@ -1,4 +1,5 @@
 import os
+import platform
 import inquirer
 import json
 import click
@@ -9,7 +10,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 @click.command()
 def init():
-    """ Initialize Kawaii build files, such as the crossfiles for Meson and other kawaii things. <3
+    """Initialize Kawaii build files, such as the crossfiles for Meson and other kawaii things. <3
     Run this command if you have just cloned the source code files! It's required for everything ^^
     """
     if not os.environ.get("ANDROID_SDK_ROOT"):
@@ -77,9 +78,25 @@ def init():
         autoescape=select_autoescape(),
     )
     crossfile = env.get_template("crossfile.ini")
-    crossfile_file.write(crossfile.render(
-        ndk_version=ndk_version,
-        cpu_info=get_cpu_info(abi),
-        abi=abi,
-        sdk_version=sdk_version,
-    ))
+    host_arch = platform.machine()
+
+    if host_arch == "AMD64":
+        host_arch = "x86_64"
+
+    if platform.system() == "Java":
+        click.echo(
+            "For the time being, kawaii init can't be use with Jython, as it exposes the operating system's name as 'Java'",
+            err=True,
+        )
+        return
+        
+    crossfile_file.write(
+        crossfile.render(
+            ndk_version=ndk_version,
+            cpu_info=get_cpu_info(abi),
+            abi=abi,
+            sdk_version=sdk_version,
+            host_arch=platform.machine(),
+            host_os=platform.system(),
+        )
+    )
