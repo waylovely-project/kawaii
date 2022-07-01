@@ -68,10 +68,15 @@ def build_deps():
             lambda project: len(project[1].deps_left) != 0, projects.items()
         )
     ]
+    deps_missing = False
+    for project in projects_with_deps:
+        for dep in project[1].deps:
+            if not dep in projects:
+                click.echo(f"Missing dependency for {project[0]}: {dep}", err=True)
+                deps_missing = True
                 
-    projects_with_deps = [project for project in filter(
-        lambda project: project[1].deps.len() != 0, projects.items()
-    ) ]
+    if deps_missing:
+        exit(1)
 
     if len(projects_with_deps) != 0:
         raise Exception(
