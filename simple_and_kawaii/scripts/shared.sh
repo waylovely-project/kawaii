@@ -1,16 +1,5 @@
 #/bin/sh
 
-if [ -z $ANDROID_ABI ]; then
-    export ANDROID_ABI=arm64-v8a
-fi
-
-
-
-
-
-export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
-export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk/23.2.8568313"
-
 export PACKAGES_FOLDER=$(readlink -f "$(dirname $0)/../libs/$ANDROID_ABI/")
 # Don't mix up .pc files from your host and build target
 export PKGCONFIG_DIRS=$(find $PACKAGES_FOLDER -wholename "**/pkgconfig" -print0 | xargs -0)
