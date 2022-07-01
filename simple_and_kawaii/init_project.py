@@ -3,7 +3,7 @@ import inquirer
 import json
 import click
 from os import path
-from utils import cache_path, get_cpu_info
+from .utils import cache_path, get_cpu_info
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 

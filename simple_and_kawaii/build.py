@@ -3,7 +3,8 @@ from os import path
 import os
 from typing import Dict
 import click
-from utils import build_path, root_source_dir
+from .utils import build_path, root_source_dir
+
 
 
 @click.command()
