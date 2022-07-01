@@ -1,7 +1,9 @@
+import json
 import subprocess
 from os import path
 
-
+def get_config():
+    return json.loads(open(path.join(build_path, "config.json")).read())
 def get_cpu_info(abi: str):
     if abi == "arm64-v8a":
         return {"triple": "aarch64-linux-android", "family": "aarch64"}
