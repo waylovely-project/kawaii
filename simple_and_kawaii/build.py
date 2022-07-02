@@ -1,7 +1,9 @@
 import json
-from os import path
+from os import abort, path
 import os
-from typing import Dict
+import subprocess
+import sys
+from typing import Dict, Tuple
 import click
 from .utils import get_cache_config, show_top_level
 
@@ -18,7 +20,7 @@ class Project:
 def build_deps():
     """Build native libraries required for Waylovely and Portals.\n
     Mostly they are written in C/C++. They'll get installed to the '' folder of the root directory of the Git repository!
-    This behavior can be changed by changing the "deps-location" path in kawaii/config.json file. 
+    This behavior can be changed by changing the "deps-location" path in kawaii/config.json file.
     """
     config = get_cache_config()
     if "deps-location" in config:
@@ -36,7 +38,7 @@ def build_deps():
 
             if path.exists(project_config_path):
                 try:
-                project_config = json.loads(open(project_config_path).read())
+                    project_config = json.loads(open(project_config_path).read())
                 except json.JSONDecodeError as error:
                     click.echo(
                         f"Oh nooo! We found an error while processing {project_config_path}! {error}",
@@ -94,6 +96,26 @@ def build_deps():
         exit(1)
 
     for project in projects_order:
+        folder_path = projects[project].path
+        script_path = path.join(folder_path, "kawaii-build.sh")
+        if path.exists(script_path):
+            run_build_command(script_path, "")
+        else:
+            if path.exists(path.join(folder_path, "meson.build")):
+                buildsystem = "meson"
+            elif path.exists(path.join(folder_path, "CMakeLists.txt")):
+                buildsystem = "cmake"
+            elif path.exists(path.join(folder_path, "autogen.sh")):
+                buildsystem = "autotools"
+            else:
+                click.echo(
+                    f"The {folder_path} does not have a kawaii-build.sh file and we can't automatically decide the build system to use ^^",
+                    err=True,
+                )
+                exit(1)
+
+            __execute_buildsystem(buildsystem, "")
+
 
 def __execute_buildsystem(buildsystem: str, args):
     run_build_command(path.join(path.dirname(__file__), "scripts", buildsystem), args)
