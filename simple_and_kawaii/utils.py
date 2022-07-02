@@ -17,8 +17,20 @@ def get_cpu_info(abi: str):
 
 __version__ = "0.1.0"
 
-root_source_dir = subprocess.check_output(
-    ["git", "rev-parse", "--show-toplevel"], text=True
+
+def __show_top_level(path):
+    return subprocess.check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True, cwd=path
 )[:-1]
-build_path = path.join(root_source_dir, "kawaii")
+
+
+def show_top_level():
+    path = __show_top_level(os.getcwd())
+    try:
+        return __show_top_level(os.path.dirname(path))
+    except subprocess.CalledProcessError:
+        return path
+
+
+build_path = path.join(show_top_level(), "kawaii")
 cache_path = path.join(build_path, "cache")

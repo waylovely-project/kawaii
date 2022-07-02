@@ -3,7 +3,7 @@ from os import path
 import os
 from typing import Dict
 import click
-from .utils import build_path, root_source_dir
+from .utils import get_cache_config, show_top_level
 
 
 class Project:
@@ -20,11 +20,11 @@ def build_deps():
     Mostly they are written in C/C++. They'll get installed to the '' folder of the root directory of the Git repository!
     This behavior can be changed by changing the "deps-location" path in kawaii/config.json file. 
     """
-    config = json.loads(open(path.join(build_path, "config.json")).read())
+    config = get_cache_config()
     if "deps-location" in config:
         deps_folder = config["deps-location"]
     else:
-        deps_folder = path.join(root_source_dir, "deps")
+        deps_folder = path.join(show_top_level(), "deps")
     projects = dict()
     queue = []
     projects_order = []
