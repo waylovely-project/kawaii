@@ -59,7 +59,7 @@ def build_deps():
 
                 if len(config.deps_left) == 0:
 
-                queue.append(name)
+                    queue.append(name)
         count += 1
 
     projects_with_deps = [
