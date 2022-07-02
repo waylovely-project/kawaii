@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 . "$(dirname $0)/shared.sh"
 
 export LIB_DIRS=$(find $PACKAGES_FOLDER -wholename "**/lib" -print0 | xargs -0)

@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 
 export PACKAGES_FOLDER=$(readlink -f "$(dirname $0)/../libs/$ANDROID_ABI/")
 # Don't mix up .pc files from your host and build target
