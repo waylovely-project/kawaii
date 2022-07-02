@@ -29,7 +29,7 @@ __version__ = "0.1.0"
 def __show_top_level(path):
     return subprocess.check_output(
         ["git", "rev-parse", "--show-toplevel"], text=True, cwd=path
-)[:-1]
+    )[:-1]
 
 
 def show_top_level():
