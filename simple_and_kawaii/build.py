@@ -94,4 +94,46 @@ def build_deps():
         exit(1)
 
     for project in projects_order:
-        print(project.path)
+
+def __execute_buildsystem(buildsystem: str, args):
+    run_build_command(path.join(path.dirname(__file__), "scripts", buildsystem), args)
+
+
+def run_build_command(command: str, args):
+    config = get_cache_config()
+    missing_config = False
+    for required_config in [
+        "android-abi",
+        "android-sdk-root",
+        "android-ndk-version",
+        "android-platform",
+    ]:
+        if required_config not in config:
+            click.echo(
+                f"{required_config} is not present in the config file! Please run kawaii init ^^",
+                err=True,
+            )
+            missing_config = True
+
+    if missing_config:
+        exit(1)
+
+    subprocess.run(
+        args,
+        executable=command,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
+        stdout=sys.stdout,
+        env={
+            "ANDROID_ABI": config["android-abi"],
+            "ANDROID_SDK_ROOT": config["android-sdk-root"],
+            "ANDROID_NDK_ROOT": path.join(
+                config["android-sdk-root"], config["android-ndk-version"]
+            ),
+            "ANDROID_PLATFORM": "android-" + config["android-platform"],
+            "PATH": os.environ.get("PATH"),
+        },
+    )
+
+
+available_buildsystems = ["meson", "cmake", "autotools", "cargo-apk"]
