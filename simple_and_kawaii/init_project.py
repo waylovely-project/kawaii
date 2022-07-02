@@ -65,7 +65,7 @@ def init():
                 "android-abi": abi,
                 "android-sdk-root": sdk_root,
                 "android-ndk-version": ndk_version,
-                "android-sdk-version": sdk_version,
+                "android-platform": sdk_version,
             },
             sort_keys=True,
             indent=4,
