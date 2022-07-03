@@ -20,7 +20,23 @@ def get_cpu_info(abi: str):
     elif abi == "x86_64":
         return {"triple": "x86_64-linux-android", "family": "x86"}
     elif abi == "x86":
-        return {"triple": "x86_32-linux-android", "family": "x86"}
+
+def get_host_arch():
+    host_arch = platform.machine()
+
+    if host_arch == "AMD64":
+        host_arch = "x86_64"
+        host_arch.lower()
+    
+    return host_arch
+
+def get_host_os():
+    if platform.system() == "Java":
+        click.echo(
+            "For the time being, kawaii init can't be use with Jython, as it exposes the operating system's name as 'Java'",
+            err=True,
+        )
+    return platform.system().lower()
 
 
 __version__ = "0.1.0"

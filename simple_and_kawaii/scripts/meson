@@ -1,6 +1,5 @@
 #!/bin/bash
 
-. "$(dirname $0)/shared.sh"
 
 meson _build --pkg-config-path="$PKG_CONFIG_PATH" \
     --cross-file ../meson-crossfiles/aarch64.ini \

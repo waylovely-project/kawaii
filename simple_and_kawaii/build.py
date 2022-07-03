@@ -121,7 +121,7 @@ def __execute_buildsystem(buildsystem: str, args):
     run_build_command(path.join(path.dirname(__file__), "scripts", buildsystem), args)
 
 
-def run_build_command(command: str, args):
+    cwd = kwargs.get("cwd") or os.getcwd()
     config = get_cache_config()
     missing_config = False
     for required_config in [
@@ -132,29 +132,82 @@ def run_build_command(command: str, args):
     ]:
         if required_config not in config:
             click.echo(
-                f"{required_config} is not present in the config file! Please run kawaii init ^^",
+                f"{required_config} is not present in the cache_config file! Please run kawaii init ^^",
                 err=True,
             )
+
             missing_config = True
 
     if missing_config:
         exit(1)
+    packages_folder = path.join(
+        get_config_key("libs-folder") or path.join(show_top_level(), "prebuilt-libs"),
+        get_config_key("android-abi"),
+    )
 
-    subprocess.run(
-        args,
+    prefix = path.join(packages_folder, path.basename(cwd))
+
+    pkgconfig_path = ":".join(
+        map(lambda path: str(path), Path(packages_folder).glob("**/pkgconfig"))
+    )
+    android_ndk_root = path.join(
+        get_config_key("android-sdk-root"), "ndk", get_config_key("android-ndk-version")
+    )
+
+    android_toolchain = path.join(
+        android_ndk_root,
+        "toolchains",
+        "llvm",
+        "prebuilt",
+        f"{get_host_os()}-{get_host_arch()}",
+    )
+
+    def toolchain_arch_script(script: str):
+        return path.join(
+            android_toolchain,
+            "bin",
+            f"{get_cpu_info(get_config_key('android-abi'))['triple']}{get_config_key('android-platform')}-{script}",
+        )
+
+    def toolchain_script(script: str):
+        return path.join(android_toolchain, "bin", script)
+
+    env = {
+        "ANDROID_ABI": get_config_key("android-abi"),
+        "ANDROID_SDK_ROOT": get_config_key("android-sdk-root"),
+        "ANDROID_NDK_ROOT": android_ndk_root,
+        "ANDROID_PLATFORM": "android-" + get_config_key("android-platform"),
+        "PATH": os.environ.get("PATH"),
+        "PREFIX": prefix,
+        "TOOLCHAIN": android_toolchain,
+        "PKG_CONFIG_PATH": pkgconfig_path,
+        "PKG_CONFIG_SYSROOT": path.join(android_toolchain, "sysroot"),
+        "ABI_TRIPLE": get_cpu_info(get_config_key("android-abi"))["triple"],
+        "MESON_CROSSFILE": path.join(
+            show_top_level(),
+            "kawaii",
+            "cache",
+            f"meson-{get_config_key('android-abi')}.ini",
+        ),
+        # Cross-compiling configuration for Autoconf based buildsystems
+        "CC": toolchain_arch_script("clang"),
+        "AR": toolchain_script("llvm-ar"),
+        "AS": toolchain_arch_script("clang"),
+        "CXX": toolchain_arch_script("clang++"),
+        "LD": toolchain_script("ld"),
+        "RANLIB": toolchain_script("llvm-ranlib"),
+        "STRIP": toolchain_script("llvm-strip"),
+    }
+
+
+    process = subprocess.run(
+        kwargs.get("args") or "",
         executable=command,
         stdin=sys.stdin,
         stderr=sys.stderr,
         stdout=sys.stdout,
-        env={
-            "ANDROID_ABI": config["android-abi"],
-            "ANDROID_SDK_ROOT": config["android-sdk-root"],
-            "ANDROID_NDK_ROOT": path.join(
-                config["android-sdk-root"], config["android-ndk-version"]
-            ),
-            "ANDROID_PLATFORM": "android-" + config["android-platform"],
-            "PATH": os.environ.get("PATH"),
-        },
+        env=env,
+        cwd=cwd,
     )
 
 
