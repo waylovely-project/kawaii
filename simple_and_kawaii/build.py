@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from traceback import print_tb
 from typing import Tuple
 import click
 from .utils import (
@@ -83,7 +84,7 @@ def build_deps():
             if not dep in projects:
                 click.echo(f"Missing dependency for {project[0]}: {dep}", err=True)
                 deps_missing = True
-                
+
     if deps_missing:
         exit(1)
 
@@ -101,8 +102,13 @@ def build_deps():
             f"Oh nooo! Found some cyclic dependencies. \n\nHere is the dependency tree:\n{tree}",
         )
         exit(1)
-
+    click.echo(
+        click.style(" START BUILDING ", bg="green", fg="white")
+        + "".join(map(lambda project: f"\n  - {project}", projects_order))
+        + "\n"
+    )
     for project in projects_order:
+        click.echo(click.style(" BUILDING ", bg="green", fg="white") + " " + project)
         folder_path = projects[project].path
         script_path = path.join(folder_path, "kawaii-build.sh")
 
@@ -211,9 +217,28 @@ def run_build_command(command: str, **kwargs):
         "STRIP": toolchain_script("llvm-strip"),
     }
 
+    def excepthook(type, value, traceback):
+        command_style = click.style(command, fg="yellow")
+        cwd_style = click.style(cwd, fg="yellow")
+        env_style = "\n".join([f"  {key}: {value}" for key, value in env.items()])
+        error = click.style(" FATAL ERROR ", bg="red", fg="white")
+        click.echo(
+            f"\n{error} {type} {value} \n{click.style(path.basename(cwd), fg='blue')} failed building\n",
+            err=True,
+        )
+        click.secho(" Command Information", err=True, bg="bright_magenta", fg="black")
+        click.echo(f"   Executed command: {command_style} {args}")
+        click.echo(f"   Working directory: {cwd_style}")
+        click.secho(" Traceback ", err=True, bg="bright_red", fg="black")
+        print_tb(traceback)
+        click.echo("")
+        click.secho(" Debug information ", err=True, bg="blue", fg="bright_green")
+        click.echo(env_style)
+
+    sys.excepthook = excepthook
 
     process = subprocess.run(
-        kwargs.get("args") or "",
+        args,
         executable=command,
         stdin=sys.stdin,
         stderr=sys.stderr,
@@ -221,6 +246,9 @@ def run_build_command(command: str, **kwargs):
         env=env,
         cwd=cwd,
     )
+
+    if process.returncode != 0:
+        raise Exception("Build command failed!")
 
 
 available_buildsystems = ["meson", "cmake", "autotools", "cargo-apk"]
