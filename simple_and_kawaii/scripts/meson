@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 if [ -d "./_build" ]; then 
