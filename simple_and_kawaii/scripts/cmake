@@ -4,6 +4,6 @@
 
 cmake -DCMAKE_TOOLCHAIN_FILE=$(readlink -f $ANDROID_NDK_PATH/build/cmake/android.toolchain.cmake) \
 -DANDROID_ABI=$ANDROID_ABI -DANDROID_PLATFORM=$ANDROID_PLATFORM \
---install-prefix=$PREFIX -GNinja "$@"
+--install-prefix=$PREFIX -GNinja . "$@"
 
 ninja install
