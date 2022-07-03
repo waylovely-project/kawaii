@@ -4,7 +4,7 @@ import inquirer
 import json
 import click
 from os import path
-from .utils import cache_path, get_cpu_info
+from .utils import cache_path, get_cpu_info, get_host_arch, get_host_os
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 
@@ -78,17 +78,7 @@ def init():
         autoescape=select_autoescape(),
     )
     crossfile = env.get_template("crossfile.ini")
-    host_arch = platform.machine()
 
-    if host_arch == "AMD64":
-        host_arch = "x86_64"
-
-    if platform.system() == "Java":
-        click.echo(
-            "For the time being, kawaii init can't be use with Jython, as it exposes the operating system's name as 'Java'",
-            err=True,
-        )
-        return
         
     crossfile_file.write(
         crossfile.render(
@@ -96,7 +86,7 @@ def init():
             cpu_info=get_cpu_info(abi),
             abi=abi,
             sdk_version=sdk_version,
-            host_arch=platform.machine(),
-            host_os=platform.system(),
+            host_arch=get_host_arch(),
+            host_os=get_host_os(),
         )
     )
