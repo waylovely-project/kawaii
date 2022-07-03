@@ -13,6 +13,13 @@ def get_config():
 def get_cache_config():
     return json.loads(open(path.join(build_path, "cache", "config.json")).read())
 
+def get_config_key(key: str):
+    cache_config = get_cache_config()
+    config = get_config()
+    if key in config:
+        return config[key]
+    elif key in cache_config:
+        return cache_config[key]
 
 def get_cpu_info(abi: str):
     if abi == "arm64-v8a":

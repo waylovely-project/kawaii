@@ -5,7 +5,9 @@ import subprocess
 import sys
 from typing import Dict, Tuple
 import click
-from .utils import get_cache_config, show_top_level
+from .utils import (
+    get_config_key,
+)
 
 
 class Project:
@@ -20,13 +22,12 @@ class Project:
 def build_deps():
     """Build native libraries required for Waylovely and Portals.\n
     Mostly they are written in C/C++. They'll get installed to the '' folder of the root directory of the Git repository!
-    This behavior can be changed by changing the "deps-location" path in kawaii/config.json file.
+    This behavior can be changed by changing the "deps-location" path in kawaii/cache_config.json file.
     """
-    config = get_cache_config()
-    if "deps-location" in config:
-        deps_folder = config["deps-location"]
-    else:
-        deps_folder = path.join(show_top_level(), "deps")
+    deps_folder = get_config_key("deps-folder") or path.join(
+        show_top_level(), "kawaii-deps"
+    )
+
     projects = dict()
     queue = []
     projects_order = []
@@ -130,7 +131,7 @@ def __execute_buildsystem(buildsystem: str, args):
         "android-ndk-version",
         "android-platform",
     ]:
-        if required_config not in config:
+        if not get_config_key(required_config):
             click.echo(
                 f"{required_config} is not present in the cache_config file! Please run kawaii init ^^",
                 err=True,
