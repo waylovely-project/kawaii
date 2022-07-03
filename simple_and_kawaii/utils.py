@@ -20,6 +20,7 @@ def get_cpu_info(abi: str):
     elif abi == "x86_64":
         return {"triple": "x86_64-linux-android", "family": "x86"}
     elif abi == "x86":
+        return {"triple": "i686-linux-android", "family": "x86"}
 
 def get_host_arch():
     host_arch = platform.machine()
