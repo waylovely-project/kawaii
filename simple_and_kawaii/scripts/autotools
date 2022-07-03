@@ -1,3 +1,5 @@
 #!/bin/bash
 
 ./configure  --host=${ABI_FULL} --target=${ABI_TRIPLE} --with-sysroot=${PKG_CONFIG_SYSROOT} --prefix=${PREFIX} "$@"
+
+make install
