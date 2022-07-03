@@ -28,7 +28,7 @@ for buildsystem in available_buildsystems:
         help="Run {buildsystem} with Kawaii configurations")
 @click.argument("config_args", nargs=-1, type=click.UNPROCESSED)
 def execute_{indentname}(config_args):
-    __execute_buildsystem("{buildsystem}", config_args)
+    __execute_buildsystem("{buildsystem}", args=config_args)
     
 cli.add_command(execute_{indentname})
     """

@@ -33,6 +33,7 @@ def build_deps():
     projects_order = []
     count = 0
     for file in os.listdir(deps_folder):
+
         file_path = path.join(deps_folder, file)
         if path.isdir(file_path):
             project_config_path = path.join(file_path, "kawaii.config.json")
@@ -99,8 +100,9 @@ def build_deps():
     for project in projects_order:
         folder_path = projects[project].path
         script_path = path.join(folder_path, "kawaii-build.sh")
+
         if path.exists(script_path):
-            run_build_command(script_path, "")
+            run_build_command(script_path, cwd=folder_path)
         else:
             if path.exists(path.join(folder_path, "meson.build")):
                 buildsystem = "meson"
@@ -115,15 +117,17 @@ def build_deps():
                 )
                 exit(1)
 
-            __execute_buildsystem(buildsystem, "")
+            __execute_buildsystem(buildsystem, cwd=folder_path)
 
 
-def __execute_buildsystem(buildsystem: str, args):
-    run_build_command(path.join(path.dirname(__file__), "scripts", buildsystem), args)
+def __execute_buildsystem(buildsystem: str, **kwargs):
+    run_build_command(
+        path.join(path.dirname(__file__), "scripts", buildsystem), **kwargs
+    )
 
 
+def run_build_command(command: str, **kwargs):
     cwd = kwargs.get("cwd") or os.getcwd()
-    config = get_cache_config()
     missing_config = False
     for required_config in [
         "android-abi",
@@ -173,6 +177,8 @@ def __execute_buildsystem(buildsystem: str, args):
     def toolchain_script(script: str):
         return path.join(android_toolchain, "bin", script)
 
+    args = list(kwargs.get("args") or "")
+    args.insert(0, command)
     env = {
         "ANDROID_ABI": get_config_key("android-abi"),
         "ANDROID_SDK_ROOT": get_config_key("android-sdk-root"),
