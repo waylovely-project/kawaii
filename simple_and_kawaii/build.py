@@ -235,8 +235,9 @@ def run_build_command(command: str, **kwargs):
         click.secho(" Command Information", err=True, bg="bright_magenta", fg="black")
         click.echo(f"   Executed command: {command_style} {args}")
         click.echo(f"   Working directory: {cwd_style}")
-        click.secho(" Traceback ", err=True, bg="bright_red", fg="black")
-        print_tb(traceback)
+        if f"{value}" != "Build command failed!":
+            click.secho(" Traceback ", err=True, bg="bright_red", fg="black")
+            print_tb(traceback)
         click.echo("")
         click.secho(" Debug information ", err=True, bg="blue", fg="bright_green")
         click.echo(env_style)
