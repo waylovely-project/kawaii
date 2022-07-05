@@ -15,7 +15,11 @@ from .utils import (
     show_top_level,
 )
 
-
+def packages_folder(**kwargs):
+    return path.join(
+        get_config_key("libs-folder") or path.join(show_top_level(), "prebuilt-libs"),
+        get_config_key("android-abi"),
+    )
 class Project:
     def __init__(self, name: str, path: str, deps: list):
         self.name = name
@@ -129,6 +133,10 @@ def build_deps():
                 exit(1)
 
             __execute_buildsystem(buildsystem, cwd=folder_path)
+    packages_folder_dir = packages_folder()
+    with click.progressbar(Path(packages_folder_dir).glob("**/*.so"), label="Installing symbolic links to the packages folder") as progressbar:
+        for libpath in progressbar:
+            Path(packages_folder_dir, libpath.name).symlink_to(libpath)
 
 
 def __execute_buildsystem(buildsystem: str, **kwargs):
@@ -156,15 +164,12 @@ def run_build_command(command: str, **kwargs):
 
     if missing_config:
         exit(1)
-    packages_folder = path.join(
-        get_config_key("libs-folder") or path.join(show_top_level(), "prebuilt-libs"),
-        get_config_key("android-abi"),
-    )
+    packages_folder_dir = packages_folder()
 
-    prefix = path.join(packages_folder, path.basename(cwd))
+    prefix = path.join(packages_folder_dir, path.basename(cwd))
 
     pkgconfig_path = ":".join(
-        map(lambda path: str(path), Path(packages_folder).glob("**/pkgconfig"))
+        map(lambda path: str(path), Path(packages_folder_dir).glob("**/pkgconfig"))
     )
     android_ndk_root = path.join(
         get_config_key("android-sdk-root"), "ndk", get_config_key("android-ndk-version")
@@ -198,6 +203,7 @@ def run_build_command(command: str, **kwargs):
         "PATH": os.environ.get("PATH"),
         "PREFIX": prefix,
         "TOOLCHAIN": android_toolchain,
+        "PACKAGES_FOLDER": packages_folder_dir,
         "PKG_CONFIG_PATH": pkgconfig_path,
         "PKG_CONFIG_SYSROOT_DIR": path.join(android_toolchain, "sysroot"),
         "ABI_TRIPLE": get_cpu_info(get_config_key("android-abi"))["triple"],
