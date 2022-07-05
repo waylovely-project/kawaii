@@ -18,7 +18,7 @@ $ kawaii build # Not yet implemented!!! Will build the current directory with au
 $ kawaii meson
 $ kawaii cmake
 $ kawaii autotools
-$ kawaii cargo-apk
+$ kawaii cargo-apk # Runs https://crates.io/crates/cargo-apk. Please use our fork instead [here](https://github.com/EchidnaHQ/simple-and-kawaii) for the time being as Kawaii need some patches for `cargo-apk` to work property!
 ```
 
 ## Requirements
