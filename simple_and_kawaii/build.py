@@ -226,7 +226,7 @@ def run_build_command(command: str, **kwargs):
     def excepthook(type, value, traceback):
         command_style = click.style(command, fg="yellow")
         cwd_style = click.style(cwd, fg="yellow")
-        env_style = "\n".join([f"  {key}: {value}" for key, value in env.items()])
+        env_style = "\n".join([f"  {click.style(key, fg='yellow')}: {value}" for key, value in env.items()])
         error = click.style(" FATAL ERROR ", bg="red", fg="white")
         click.echo(
             f"\n{error} {type} {value} \n{click.style(path.basename(cwd), fg='blue')} failed building\n",
