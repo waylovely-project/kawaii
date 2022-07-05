@@ -232,7 +232,7 @@ def run_build_command(command: str, **kwargs):
             f"\n{error} {type} {value} \n{click.style(path.basename(cwd), fg='blue')} failed building\n",
             err=True,
         )
-        click.secho(" Command Information", err=True, bg="bright_magenta", fg="black")
+        click.secho(" Command Information ", err=True, bg="bright_magenta", fg="black")
         click.echo(f"   Executed command: {command_style} {args}")
         click.echo(f"   Working directory: {cwd_style}")
         if f"{value}" != "Build command failed!":
