@@ -199,7 +199,7 @@ def run_build_command(command: str, **kwargs):
         "PREFIX": prefix,
         "TOOLCHAIN": android_toolchain,
         "PKG_CONFIG_PATH": pkgconfig_path,
-        "PKG_CONFIG_SYSROOT": path.join(android_toolchain, "sysroot"),
+        "PKG_CONFIG_SYSROOT_DIR": path.join(android_toolchain, "sysroot"),
         "ABI_TRIPLE": get_cpu_info(get_config_key("android-abi"))["triple"],
         "MESON_CROSSFILE": path.join(
             show_top_level(),
