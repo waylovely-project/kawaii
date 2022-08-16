@@ -21,7 +21,10 @@ class OrderedGroup(click.Group):
         with formatter.section("The available commands are"):
             for command in main_commands:
                 command: click.Command = super().get_command(ctx, command)
-                desc = command.help.split("\n")[0]
+                if command.help:
+                    desc = command.help.split("\n")[0]
+                else:
+                    desc = "No description available"
                 formatter.write_text(f"{command.name} - {desc}")
         
         with formatter.section("You can also directly execute build systems with Kawaii configurations!\n The available commands are"):
