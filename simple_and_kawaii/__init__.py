@@ -1,6 +1,7 @@
 import click
 
 from simple_and_kawaii.group import OrderedGroup
+from simple_and_kawaii.vscode import vscode_settings
 from .init_project import init
 from .build import build_deps, __execute_buildsystem, available_buildsystems
 
@@ -12,7 +13,7 @@ def cli():
 
 cli.add_command(init)
 cli.add_command(build_deps)
-
+cli.add_command(vscode_settings)
 
 @click.group()
 def buildsystems():
