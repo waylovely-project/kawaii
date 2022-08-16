@@ -36,7 +36,7 @@ def __execute_buildsystem(buildsystem: str, **kwargs):
 
 
 def run_build_command(command: str, **kwargs):
-    (env, cwd, args) = get_envvars()
+    (env, cwd, args) = get_envvars(command)
 
     def excepthook(type, value, traceback):
         command_style = click.style(command, fg="yellow")
