@@ -28,12 +28,138 @@ class Project:
         self.deps_left = deps
 
 
+
+def __execute_buildsystem(buildsystem: str, **kwargs):
+    run_build_command(
+        path.join(path.dirname(__file__), "scripts", buildsystem), **kwargs
+    )
+
+
+def run_build_command(command: str, **kwargs):
+    (env, cwd, args) = get_envvars()
+
+    def excepthook(type, value, traceback):
+        command_style = click.style(command, fg="yellow")
+        cwd_style = click.style(cwd, fg="yellow")
+        env_style = "\n".join([f"  {click.style(key, fg='yellow')}: {value}" for key, value in env.items()])
+        error = click.style(" FATAL ERROR ", bg="red", fg="white")
+        click.echo(
+            f"\n{error} {type} {value} \n{click.style(path.basename(cwd), fg='blue')} failed building\n",
+            err=True,
+        )
+        click.secho(" Command Information ", err=True, bg="bright_magenta", fg="black")
+        click.echo(f"   Executed command: {command_style} {args}")
+        click.echo(f"   Working directory: {cwd_style}")
+        if f"{value}" != "Build command failed!":
+            click.secho(" Traceback ", err=True, bg="bright_red", fg="black")
+            print_tb(traceback)
+        click.echo("")
+        click.secho(" Debug information ", err=True, bg="blue", fg="bright_green")
+        click.echo(env_style)
+
+    sys.excepthook = excepthook
+
+    process = subprocess.run(
+        args,
+        executable=command,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
+        stdout=sys.stdout,
+        env=env,
+        cwd=cwd,
+    )
+
+    if process.returncode != 0:
+        raise Exception("Build command failed!")
+
+def get_envvars(command: str, **kwargs):
+    cwd = kwargs.get("cwd") or os.getcwd()
+    missing_config = False
+    for required_config in [
+    "android-abi",
+    "android-sdk-root",
+    "android-ndk-version",
+    "android-platform",
+    ]:
+        if not get_config_key(required_config):
+            click.echo(
+                f"{required_config} is not present in the cache_config file! Please run kawaii init ^^",
+                    err=True,
+            )
+            missing_config = True
+
+    if missing_config:
+        exit(1)
+    packages_folder_dir = packages_folder()
+
+    prefix = path.join(packages_folder_dir, path.basename(cwd))
+
+    pkgconfig_path = ":".join(
+        map(lambda path: str(path), Path(packages_folder_dir).glob("**/pkgconfig"))
+    )
+    android_ndk_root = path.join(
+        get_config_key("android-sdk-root"), "ndk", get_config_key("android-ndk-version")
+    )
+
+    android_toolchain = path.join(
+        android_ndk_root,
+        "toolchains",
+        "llvm",
+        "prebuilt",
+        f"{get_host_os()}-{get_host_arch()}",
+    )
+
+    def toolchain_arch_script(script: str):
+        return path.join(
+            android_toolchain,
+            "bin",
+            f"{get_cpu_info(get_config_key('android-abi'))['triple']}{get_config_key('android-platform')}-{script}",
+        )
+
+    def toolchain_script(script: str):
+        return path.join(android_toolchain, "bin", script)
+
+    
+    args = list(kwargs.get("args") or "")
+    args.insert(0, command)
+    env = {
+        "ANDROID_ABI": get_config_key("android-abi"),
+        "ANDROID_SDK_ROOT": get_config_key("android-sdk-root"),
+        "ANDROID_NDK_ROOT": android_ndk_root,
+        "ANDROID_PLATFORM": "android-" + get_config_key("android-platform"),
+        "PATH": os.environ.get("PATH"),
+        "PREFIX": prefix,
+        "TOOLCHAIN": android_toolchain,
+        "PACKAGES_FOLDER": packages_folder_dir,
+        "PKG_CONFIG_PATH": pkgconfig_path,
+        "PKG_CONFIG_SYSROOT_DIR": path.join(android_toolchain, "sysroot"),
+        "ABI_TRIPLE": get_cpu_info(get_config_key("android-abi"))["triple"],
+        "MESON_CROSSFILE": path.join(
+                show_top_level(),
+            "kawaii",
+            "cache",
+                f"meson-{get_config_key('android-abi')}.ini",
+            ),
+            # Cross-compiling configuration for Autoconf based buildsystems
+        "CC": toolchain_arch_script("clang"),
+        "AR": toolchain_script("llvm-ar"),
+        "AS": toolchain_arch_script("clang"),
+        "CXX": toolchain_arch_script("clang++"),
+        "LD": toolchain_script("ld"),
+        "RANLIB": toolchain_script("llvm-ranlib"),
+        "STRIP": toolchain_script("llvm-strip"),
+    }
+
+    return (env, cwd, args)
+
+
+available_buildsystems = ["meson", "cmake", "autotools", "cargo-apk"]
+
 @click.command()
-def build_deps():
+def build_deps():    
     """Build native libraries required for Waylovely and Portals.\n
     Mostly they are written in C/C++. They'll get installed to the '' folder of the root directory of the Git repository!
-    This behavior can be changed by changing the "deps-location" path in kawaii/cache_config.json file.
-    """
+    This behavior can be changed by changing the "deps-location" path in kawaii/cache_config.json file."""
     deps_folder = get_config_key("deps-folder") or path.join(
         show_top_level(), "kawaii-deps"
     )
@@ -134,128 +260,11 @@ def build_deps():
 
             __execute_buildsystem(buildsystem, cwd=folder_path)
     packages_folder_dir = packages_folder()
+    with click.progressbar(Path(packages_folder_dir).glob("*.so"), label="Removing old symbolic links") as progressbar:
+        for libpath in progressbar:
+            libpath.unlink()
+    
     with click.progressbar(Path(packages_folder_dir).glob("**/*.so"), label="Installing symbolic links to the packages folder") as progressbar:
         for libpath in progressbar:
-            Path(packages_folder_dir, libpath.name).symlink_to(libpath)
-
-
-def __execute_buildsystem(buildsystem: str, **kwargs):
-    run_build_command(
-        path.join(path.dirname(__file__), "scripts", buildsystem), **kwargs
-    )
-
-
-def run_build_command(command: str, **kwargs):
-    cwd = kwargs.get("cwd") or os.getcwd()
-    missing_config = False
-    for required_config in [
-        "android-abi",
-        "android-sdk-root",
-        "android-ndk-version",
-        "android-platform",
-    ]:
-        if not get_config_key(required_config):
-            click.echo(
-                f"{required_config} is not present in the cache_config file! Please run kawaii init ^^",
-                err=True,
-            )
-
-            missing_config = True
-
-    if missing_config:
-        exit(1)
-    packages_folder_dir = packages_folder()
-
-    prefix = path.join(packages_folder_dir, path.basename(cwd))
-
-    pkgconfig_path = ":".join(
-        map(lambda path: str(path), Path(packages_folder_dir).glob("**/pkgconfig"))
-    )
-    android_ndk_root = path.join(
-        get_config_key("android-sdk-root"), "ndk", get_config_key("android-ndk-version")
-    )
-
-    android_toolchain = path.join(
-        android_ndk_root,
-        "toolchains",
-        "llvm",
-        "prebuilt",
-        f"{get_host_os()}-{get_host_arch()}",
-    )
-
-    def toolchain_arch_script(script: str):
-        return path.join(
-            android_toolchain,
-            "bin",
-            f"{get_cpu_info(get_config_key('android-abi'))['triple']}{get_config_key('android-platform')}-{script}",
-        )
-
-    def toolchain_script(script: str):
-        return path.join(android_toolchain, "bin", script)
-
-    args = list(kwargs.get("args") or "")
-    args.insert(0, command)
-    env = {
-        "ANDROID_ABI": get_config_key("android-abi"),
-        "ANDROID_SDK_ROOT": get_config_key("android-sdk-root"),
-        "ANDROID_NDK_ROOT": android_ndk_root,
-        "ANDROID_PLATFORM": "android-" + get_config_key("android-platform"),
-        "PATH": os.environ.get("PATH"),
-        "PREFIX": prefix,
-        "TOOLCHAIN": android_toolchain,
-        "PACKAGES_FOLDER": packages_folder_dir,
-        "PKG_CONFIG_PATH": pkgconfig_path,
-        "PKG_CONFIG_SYSROOT_DIR": path.join(android_toolchain, "sysroot"),
-        "ABI_TRIPLE": get_cpu_info(get_config_key("android-abi"))["triple"],
-        "MESON_CROSSFILE": path.join(
-            show_top_level(),
-            "kawaii",
-            "cache",
-            f"meson-{get_config_key('android-abi')}.ini",
-        ),
-        # Cross-compiling configuration for Autoconf based buildsystems
-        "CC": toolchain_arch_script("clang"),
-        "AR": toolchain_script("llvm-ar"),
-        "AS": toolchain_arch_script("clang"),
-        "CXX": toolchain_arch_script("clang++"),
-        "LD": toolchain_script("ld"),
-        "RANLIB": toolchain_script("llvm-ranlib"),
-        "STRIP": toolchain_script("llvm-strip"),
-    }
-
-    def excepthook(type, value, traceback):
-        command_style = click.style(command, fg="yellow")
-        cwd_style = click.style(cwd, fg="yellow")
-        env_style = "\n".join([f"  {click.style(key, fg='yellow')}: {value}" for key, value in env.items()])
-        error = click.style(" FATAL ERROR ", bg="red", fg="white")
-        click.echo(
-            f"\n{error} {type} {value} \n{click.style(path.basename(cwd), fg='blue')} failed building\n",
-            err=True,
-        )
-        click.secho(" Command Information ", err=True, bg="bright_magenta", fg="black")
-        click.echo(f"   Executed command: {command_style} {args}")
-        click.echo(f"   Working directory: {cwd_style}")
-        if f"{value}" != "Build command failed!":
-            click.secho(" Traceback ", err=True, bg="bright_red", fg="black")
-            print_tb(traceback)
-        click.echo("")
-        click.secho(" Debug information ", err=True, bg="blue", fg="bright_green")
-        click.echo(env_style)
-
-    sys.excepthook = excepthook
-
-    process = subprocess.run(
-        args,
-        executable=command,
-        stdin=sys.stdin,
-        stderr=sys.stderr,
-        stdout=sys.stdout,
-        env=env,
-        cwd=cwd,
-    )
-
-    if process.returncode != 0:
-        raise Exception("Build command failed!")
-
-
-available_buildsystems = ["meson", "cmake", "autotools", "cargo-apk"]
+            dist_path = Path(packages_folder_dir, libpath.name)
+            dist_path.symlink_to(libpath)
