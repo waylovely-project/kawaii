@@ -1,6 +1,6 @@
 #!/bin/bash
 
 export LIB_DIRS=$(find $PACKAGES_FOLDER -wholename "**/lib" -print0 | xargs -0)
-export CFLAGS="-L${LIB_DIRS// / -L} $LD_LINK_ARGS"
+export CFLAGS="-L${LIB_DIRS// / -L} $LD_LINK_ARGS -v"
 export LINKER_FLAGS=$CFLAGS
-RUSTFLAGS="-Clink-args='$CFLAGS'" cargo apk build --color=always "$@"
+RUSTFLAGS="-Clink-args='$CFLAGS'" cargo apk "$@" --color=always
