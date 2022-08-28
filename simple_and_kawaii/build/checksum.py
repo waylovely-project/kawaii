@@ -1,7 +1,7 @@
 import click
 import hashlib
 from hashlib import algorithms_available
-def get_checksum(source, sourcee):
+def get_checksum_config(source, sourcee):
     if "checksum" in sourcee:
         if "checksum_type" in sourcee:
             checksum_type = sourcee["checksum_type"]
@@ -22,14 +22,16 @@ def get_checksum(source, sourcee):
 
         return (checksum, checksum_type)
 
-def matches_checksum(checksum, callback):
-      m = hashlib.new(checksum[1])
+def get_checksum(type, callback):
+      m = hashlib.new(type)
       callback(m)
                             
-      hex = m.hexdigest()
-      return hex != checksum[0]
+      return m.hexdigest()
 
-def file_checksum(m, path):
+def file_checksum(type, path):
+    return get_checksum(type, lambda m : _file_checksum(m, path))
+    
+def _file_checksum(m, path):
        with open(path, mode="r") as file:
             chunk = 0
 

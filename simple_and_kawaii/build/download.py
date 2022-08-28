@@ -12,7 +12,7 @@ import urllib
 import tarfile
 import zipfile
 
-from .checksum import file_checksum, get_checksum, matches_checksum
+from .checksum import file_checksum, get_checksum, get_checksum_config
 
 
 def download_source(source_name, sourcee, sources_location, bar):
@@ -21,7 +21,7 @@ def download_source(source_name, sourcee, sources_location, bar):
             source = sourcee["url"]
             url = urlparse(source)
             paths = url.path.split("/")
-            checksum = get_checksum(source, sourcee)
+            checksum = get_checksum_config(source, sourcee)
             install_path = path.join(sources_location, source_name.split("/")[-1])
           
             url = urlparse(source)
@@ -31,7 +31,7 @@ def download_source(source_name, sourcee, sources_location, bar):
          
            
             
-            if tarball_path.exists() and matches_checksum(checksum, lambda m : file_checksum(m, tarball_path)):
+            if tarball_path.exists() and file_checksum(checksum[1], tarball_path) == checksum[0]:
                 return
 
             folder_path = Path(install_path).joinpath(source_name)
@@ -68,22 +68,21 @@ def download_source(source_name, sourcee, sources_location, bar):
             with requests.get(source, allow_redirects=True, stream=True) as f:
            
                          
-                if checksum and matches_checksum(checksum, lambda m : unpack_source(tarball_path, folder_path, ext, f, lambda bytes : m.update(bytes))):
-                    os.remove(tarball_path)
-                    click.echo(f"Found checksum {hex}!! Different that checsum {checksum} written in the manifest", Err=True)
-                    exit(1)
+                if checksum:
+                    checksum_found = get_checksum(checksum[1], lambda m : unpack_source(tarball_path, folder_path, ext, f, lambda bytes : m.update(bytes))) 
+                    if  checksum_found != checksum[0]:
+                        os.remove(tarball_path)
+                        click.echo(f"Found checksum {checksum_found} for source {source_name}!! Different than checksum {checksum[0]} written in the manifest", err=True)
+                        exit(1)
                      
             bar.update(1)
 
 
 def unpack_source(tarball_path, folder_path, ext, f, callback):
         
-        if not tarball_path.parent.exists():
-            try:
-                tarball_path.parent.mkdir(parents=True)
-            except:
-                print(tarball_path)
-                exit(1)
+        if not folder_path.exists():
+            folder_path.mkdir(parents=True)
+         
             
         with open(tarball_path, mode="wb") as file:
                 for content in f.iter_content():
@@ -95,7 +94,7 @@ def unpack_source(tarball_path, folder_path, ext, f, callback):
                     else:
                         extfortar = ext[-1]
                     
-                    subprocess.run(["tar", "xf", tarball_path, folder_path, f"--{extfortar}"])
+                    subprocess.run(["tar", "xvf", str(tarball_path), f"--{extfortar}", "--strip-components", "1", "-C", str(folder_path)],  check=True)
 
         return (tarball_path, folder_path)
 
