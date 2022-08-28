@@ -3,7 +3,8 @@ import click
 from simple_and_kawaii.group import OrderedGroup
 from simple_and_kawaii.vscode import vscode_settings
 from .init_project import init
-from .build import build_deps, __execute_buildsystem, available_buildsystems
+from .build import build_deps
+from .build.buildsystem import  available_buildsystems
 
 
 @click.group(cls=OrderedGroup)
@@ -29,7 +30,7 @@ for buildsystem in available_buildsystems:
         help="Run {buildsystem} with Kawaii configurations")
 @click.argument("config_args", nargs=-1, type=click.UNPROCESSED)
 def execute_{indentname}(config_args):
-    __execute_buildsystem("{buildsystem}", args=config_args)
+    execute_buildsystem("{buildsystem}", args=config_args)
     
 cli.add_command(execute_{indentname})
     """

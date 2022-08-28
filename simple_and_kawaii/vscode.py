@@ -1,8 +1,9 @@
 from os import path
 import click
 from pathlib import Path
-from simple_and_kawaii.build import packages_folder, get_envvars
-from simple_and_kawaii.utils import get_config_key, get_host_arch, get_host_os, show_top_level
+from .build.project import packages_folder
+from .build.utils import get_envvars
+from .utils import get_config_key, get_host_arch, get_host_os, show_top_level
 import commentjson
 
 @click.command()

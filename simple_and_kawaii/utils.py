@@ -1,3 +1,4 @@
+import toml
 import click
 import json
 import os
@@ -7,19 +8,22 @@ from os import path
 
 
 def get_config():
-    return json.loads(open(path.join(build_path, "config.json")).read())
+    return toml.loads(open(path.join(top_level, "kawaii.toml")).read())
 
 
-def get_cache_config():
-    return json.loads(open(path.join(build_path, "cache", "config.json")).read())
 
 def get_config_key(key: str):
-    cache_config = get_cache_config()
+    cache_config_path = path.join(top_level, ".local", "kawaii.toml")
     config = get_config()
-    if key in config:
-        return config[key]
-    elif key in cache_config:
-        return cache_config[key]
+    
+    if path.exists(cache_config_path) and path.isfile(cache_config_path):
+        cache_config = toml.loads(open().read())
+        if key in config:
+            return config[key]
+        elif  key in cache_config:
+            return cache_config[key]
+    else:
+        config.get(key)
 
 def get_cpu_info(abi: str):
     if abi == "arm64-v8a":
@@ -66,6 +70,6 @@ def show_top_level():
     except subprocess.CalledProcessError:
         return path
 
-
-build_path = path.join(show_top_level(), "kawaii")
+top_level = show_top_level()
+build_path = path.join(top_level, "kawaii")
 cache_path = path.join(build_path, "cache")
