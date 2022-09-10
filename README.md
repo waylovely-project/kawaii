@@ -63,18 +63,18 @@ Would you like to change the build flags? You can do that by adding your own ste
 url = "file://./libxml2"
 steps = [
     "kawaii cmake -DLIBXML2_WITH_TESTS=OFF -DLIBXML2_WITH_LZMA=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_PYTHON=OFF
-    -DZLIB_LIBRARY_DIR=$zlib_ng_path/lib
 ]
 ```
 
 In this example, we explicitly tell Kawaii to use the Cmake build command with the build arguments that we pass!!
 
+By the wayy, 
+Kawaii will pass some environment variables to the build script! Look at [`build.py`](./simple_and_kawaii/build.py) for all the possible variables!
+
 You can try building the collection with just:
 ```sh
 $ kawaii
 ```
-
-Kawaii will pass some environment variables to the build script! Look at [`build.py`](./simple_and_kawaii/build.py) for all the possible variables!
 
 You can then use the collection inside of another Kawaii manifest outside of the repository:
 
