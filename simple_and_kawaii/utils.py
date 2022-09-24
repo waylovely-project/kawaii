@@ -7,33 +7,19 @@ import subprocess
 from os import path
 
 
-def get_config():
-    return toml.loads(open(path.join(top_level, "kawaii.toml")).read())
 
-
-
-def get_config_key(key: str):
-    cache_config_path = path.join(top_level, ".local", "kawaii.toml")
-    config = get_config()
-    
-    if path.exists(cache_config_path) and path.isfile(cache_config_path):
-        cache_config = toml.loads(open().read())
-        if key in config:
-            return config[key]
-        elif  key in cache_config:
-            return cache_config[key]
-    else:
-        config.get(key)
 
 def get_cpu_info(abi: str):
     if abi == "arm64-v8a":
-        return {"triple": "aarch64-linux-android", "family": "aarch64"}
+        return {"triple": "aarch64-linux-android", "family": "aarch64", "cpu": "aarch64"}
     elif abi == "armv7a-eabi":
-        return {"triple": "armv7a-linux-androideabi", "family": "arm"}
+        return {"triple": "armv7a-linux-androideabi", "family": "arm", "cpu": "arm"}
     elif abi == "x86_64":
-        return {"triple": "x86_64-linux-android", "family": "x86"}
+        return {"triple": "x86_64-linux-android", "family": "x86", "cpu":"x86_64"}
     elif abi == "x86":
-        return {"triple": "i686-linux-android", "family": "x86"}
+        return {"triple": "i686-linux-android", "family": "x86", "cpu":"x86"}
+    elif abi == "noarch":
+        return {"triple": "unknown-linux-android", "family": "unknown", "cpu":"noarch"}
 
 def get_host_arch():
     host_arch = platform.machine()

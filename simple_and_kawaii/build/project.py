@@ -1,19 +1,29 @@
-
+from dataclasses import dataclass, field
+from lib2to3.pgen2.tokenize import StopTokenizing
 from os import path
-from simple_and_kawaii.utils import top_level, get_config_key
-def packages_folder(**kwargs):
+from pathlib import Path
+from typing import List, Optional
+from simple_and_kawaii.utils import top_level
+def packages_folder(arch, config):
     return path.join(
-        get_config_key("libs-folder") or path.join(top_level, "prebuilt-libs"),
-        get_config_key("android-abi"),
+        config.get("install-path") or path.join(top_level, "prebuilt-libs"),
+        arch,
     )
+
+@dataclass
+class ProjectSource:
+    url: Optional[str]
+    local: Optional[str]
+    checksum: Optional[str]
+    checksum_type: Optional[str]
+    
+@dataclass
 class Project:
-    def __init__(self, name: str, path: str, deps: list):
-        self.name = name
-        self.path = path
-        self.deps = deps
-        self.deps_left = deps
-
-
-
-
-
+    name: str
+    deps: Optional[List[str]]
+    sources: List[ProjectSource]
+    arch: str
+    path: Path
+    config: dict
+    id: Optional[str]
+    category: Optional[str]

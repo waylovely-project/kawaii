@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import urllib
 from hashlib import algorithms_available
 from os import path
 import os
@@ -15,7 +16,7 @@ import zipfile
 from .checksum import file_checksum, get_checksum, get_checksum_config
 
 
-def download_source(source_name, sourcee, sources_location, bar):
+def download_source(source_name, sourcee, sources_location, config):
             if "url" not in sourcee:
                 raise Exception(f"The URl for {source_name} is missing!!")
             source = sourcee["url"]
@@ -65,40 +66,31 @@ def download_source(source_name, sourcee, sources_location, bar):
                     cwd=folder_path
                 )
 
-            with requests.get(source, allow_redirects=True, stream=True) as f:
-           
-                         
-                if checksum:
-                    checksum_found = get_checksum(checksum[1], lambda m : unpack_source(tarball_path, folder_path, ext, f, lambda bytes : m.update(bytes))) 
-                    if  checksum_found != checksum[0]:
+            subprocess.run(["wget", source, "--output-document", tarball_path], check=True)
+                    
+            if checksum[1] not in config.checksums:
+                click(f"{checksum[1]} is not ", err=True)
+
+            if  checksum_found != checksum[0]:
                         os.remove(tarball_path)
                         click.echo(f"Found checksum {checksum_found} for source {source_name}!! Different than checksum {checksum[0]} written in the manifest", err=True)
                         exit(1)
                      
-            bar.update(1)
+    
 
-
-def unpack_source(tarball_path, folder_path, ext, f, callback):
-        
+def unpack_source(tarball_path, folder_path, ext, callback):
         if not folder_path.exists():
-            folder_path.mkdir(parents=True)
-         
-            
-        with open(tarball_path, mode="wb") as file:
-                for content in f.iter_content():
-                    callback(content)
-                    file.write(content)
-                if ext[-2] == "tar":
-                    if ext[-1] == "gz":
-                        extfortar = "gzip"
-                    else:
-                        extfortar = ext[-1]
+            folder_path.mkdir(parents=True)    
+
+        if ext[-1] == "zip":
+                    subprocess.run(["unzip", "-j", tarball_path, "-d", folder_path], check=True)
+        elif ext[-2] == "tar":
+            if ext[-1] == "gz":
+                extfortar = "gzip"
+            else:
+                extfortar = ext[-1]
                     
-                    subprocess.run(["tar", "xvf", str(tarball_path), f"--{extfortar}", "--strip-components", "1", "-C", str(folder_path)],  check=True)
-
-        return (tarball_path, folder_path)
-
-
+            subprocess.run(["tar", "xf", tarball_path, f"--{extfortar}", "--strip-components", "1", "-C", folder_path])
 async def download_all_sources(sources, sources_location): 
     
     for source in sources.keys():
