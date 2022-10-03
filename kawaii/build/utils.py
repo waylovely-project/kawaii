@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import click
 from .project import packages_folder
-from simple_and_kawaii.utils import get_cpu_info, get_host_arch, get_host_os, show_top_level
+from kawaii.utils import get_cpu_info, get_host_arch, get_host_os, show_top_level
 def get_envvars(command, arch, app_id, main_config, **kwargs):
 
     cwd = kwargs.get("cwd") or os.getcwd()
@@ -30,8 +30,10 @@ def get_envvars(command, arch, app_id, main_config, **kwargs):
 
     packages_folder_dir = packages_folder(arch, main_config)
     
-    prefix = path.join(packages_folder_dir, path.basename(cwd))
+    prefix = Path(packages_folder_dir).joinpath(path.basename(cwd))
 
+    if not prefix.exists():
+        prefix.mkdir()
     pkgconfig_path = ":".join(
         map(lambda path: str(path), Path(packages_folder_dir).glob("**/pkgconfig"))
     )    
@@ -76,9 +78,7 @@ def get_envvars(command, arch, app_id, main_config, **kwargs):
         "PKG_CONFIG_SYSROOT_DIR": path.join(android_toolchain, "sysroot"),
         "ABI_TRIPLE": get_cpu_info(arch)["triple"],
         "MESON_CROSSFILE": path.join(
-                show_top_level(),
-            "kawaii",
-            "cache",
+                click.get_app_dir("kawaii-build"),
                 f"meson-{arch}.ini",
             ),
             # Cross-compiling configuration for Autoconf based buildsystems

@@ -2,13 +2,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 import click
 import os
-from simple_and_kawaii.group import OrderedGroup
-from simple_and_kawaii.vscode import vscode_settings
+from kawaii.group import OrderedGroup
+from kawaii.vscode import vscode_settings
 
 import toml
-from .init_project import init
+# from .init_project import init
 from .build import build_deps
-from .config import init_config
+from .config import init_config, set_environment
 from .build.buildsystem import  available_buildsystems, execute_buildsystem
 from .build.build import build_one
 from .build.collections import get_packages, get_source_package
@@ -16,10 +16,13 @@ from .config import init_config
 from . import config 
 @click.group(cls=OrderedGroup, invoke_without_command=True)
 @click.option("--arch", default="arm64-v8a", help="The architechture, supports")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
+@click.option("--reconfigure", "-r", is_flag=True, help="Reconfigure all build files from scratch")
 @click.pass_context
-def cli(ctx, arch):
+def cli(ctx, arch, verbose, reconfigure):
+    set_environment(verbose, reconfigure)
     if ctx.invoked_subcommand is None:
-
+        
         project = get_source_package(Path.cwd(), arch)
         config = project.config 
         config = init_config(config)
@@ -42,7 +45,7 @@ def cli(ctx, arch):
     pass
 
 
-cli.add_command(init)
+#cli.add_command(init)
 cli.add_command(build_deps)
 cli.add_command(vscode_settings)
 

@@ -20,7 +20,7 @@ import sys
 from traceback import print_tb
 from typing import Tuple
 import click
-from simple_and_kawaii.utils import top_level
+from kawaii.utils import top_level
 
 @click.option("--experimental-sources-feature", is_flag=True)
 @click.option("--arch", default="arm64-v8a", help="The architechture, supports")

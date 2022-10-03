@@ -1,12 +1,12 @@
 from urllib.parse import urlparse
 import click
 from jinja2 import Environment, DictLoader, select_autoescape
-from .project import Project, ProjectSource
+from .project import HalfInitedProject, UninitProject, ProjectSource
 import toml
 from pathlib import Path
 from os import listdir, path
-from simple_and_kawaii.build.utils import get_envvars
-from simple_and_kawaii.utils import top_level
+from kawaii.build.utils import get_envvars
+from kawaii.utils import top_level
 def get_packages(config, path, arch, app_id, main_config, **kwargs): 
     packages = list()
  
@@ -26,8 +26,16 @@ def get_packages(config, path, arch, app_id, main_config, **kwargs):
 
                 config = toml.loads(manifest.render(env))
                 
-                
-                packages.append(Project(file_path.name.removesuffix(".kawaii"), config.get("deps") or [], [map(lambda source: ProjectSource(source.get("url"), source.get("local"), source.get("checksum-type")), config["sources"])],  arch, file_path, config, None, file_path.parent.name))
+                project = UninitProject.Schema().load(config)
+                HalfInitedProject.Schema().load({
+                    "id": f"{project.category}/{project.name}",
+                    "arch": arch, 
+                    "category": project.category,
+                    "path": file_path,
+                    "deps": project.deps or [],
+                    **project
+                    })
+                packages.append()
 
 
 
@@ -45,7 +53,7 @@ def get_source_package(path: Path, arch: str):
 
     config = toml.loads(open(config_file).read())
 
-    return Project(path.name, config.get("deps"), [ProjectSource(None, path,None, None)], arch, config_file, config, path.name, None)
+    return  UninitProject.Schema().load(config)
 
 
 

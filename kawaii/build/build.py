@@ -18,17 +18,14 @@ from os import path, listdir
 from pathlib import Path
 import toml
 
-from .project import Project, packages_folder
+from .project import FullyInitedProject, UninitProject, packages_folder
 from .buildsystem import run_build_command
 from .download import download_all_sources
 from .topological_sorting import sort_deps
-def build_all(all_projects: List[Project], arch: str, app_id: str, main_config):
+def build_all(all_projects: List[FullyInitedProject], arch: str, app_id: str, main_config):
     projects_dict = dict()
-    for project in all_projects:
-        if not project.id: 
-            project.id = project.category + "/" + project.name
-        projects_dict[project.id] = project
 
+ 
     sorter: TopologicalSorter = sort_deps(all_projects)
     order = list(sorter.static_order())
 
@@ -52,7 +49,7 @@ def build_all(all_projects: List[Project], arch: str, app_id: str, main_config):
             dist_path = Path(packages_folder_dir, libpath.name)
             dist_path.symlink_to(libpath)
 
-def build_one(project: Project, all_projects: List[Project], arch, app_id, main_config):
+def build_one(project: UninitProject, all_projects: List[UninitProject], arch, app_id, main_config):
     
     deps = lookup_deps_project(project, all_projects)
 
@@ -60,7 +57,7 @@ def build_one(project: Project, all_projects: List[Project], arch, app_id, main_
     deps.append(project)
     build_all(deps, arch, app_id, main_config)
 
-def _build_one(project: Project, projects: List[Project], arch, app_id, main_config):
+def _build_one(project: FullyInitedProject, projects: List[FullyInitedProject], arch, app_id, main_config):
     click.echo(click.style(" BUILDING ", bg="green", fg="white") + " " + project.id)
     folder_path = project.path.parent
     sources = project.config.get("sources")

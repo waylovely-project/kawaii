@@ -18,9 +18,14 @@ def init_config(main_config):
 
     }
 
-
-
     return main_config
+
+
+def set_environment(v, r):
+    if v:
+        os.environ["KAWAII_VERBOSE"] = "1"
+    if r:
+        os.environ["KAWAII_RECONFIGURE"] = "1"
 
     
 

@@ -1,6 +1,5 @@
 import os
 import platform
-import inquirer
 import json
 import click
 from os import path
