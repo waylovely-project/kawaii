@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ ${$KAWAII_RECONFIGURE+x} ]
+then recon="--reconfigure"
+fi
+
+meson _build --pkg-config-path="$PKG_CONFIG_PATH" \
+--cross-file $MESON_CROSSFILE \
+--prefix=$PREFIX \
+$recon "$@"
+
+ninja install -C _build

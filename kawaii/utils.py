@@ -1,3 +1,4 @@
+
 import click
 import json
 import os
@@ -6,30 +7,19 @@ import subprocess
 from os import path
 
 
-def get_config():
-    return json.loads(open(path.join(build_path, "config.json")).read())
 
-
-def get_cache_config():
-    return json.loads(open(path.join(build_path, "cache", "config.json")).read())
-
-def get_config_key(key: str):
-    cache_config = get_cache_config()
-    config = get_config()
-    if key in config:
-        return config[key]
-    elif key in cache_config:
-        return cache_config[key]
 
 def get_cpu_info(abi: str):
     if abi == "arm64-v8a":
-        return {"triple": "aarch64-linux-android", "family": "aarch64"}
+        return {"triple": "aarch64-linux-android", "family": "aarch64", "cpu": "aarch64"}
     elif abi == "armv7a-eabi":
-        return {"triple": "armv7a-linux-androideabi", "family": "arm"}
+        return {"triple": "armv7a-linux-androideabi", "family": "arm", "cpu": "arm"}
     elif abi == "x86_64":
-        return {"triple": "x86_64-linux-android", "family": "x86"}
+        return {"triple": "x86_64-linux-android", "family": "x86", "cpu":"x86_64"}
     elif abi == "x86":
-        return {"triple": "i686-linux-android", "family": "x86"}
+        return {"triple": "i686-linux-android", "family": "x86", "cpu":"x86"}
+    elif abi == "noarch":
+        return {"triple": "unknown-linux-android", "family": "unknown", "cpu":"noarch"}
 
 def get_host_arch():
     host_arch = platform.machine()
@@ -66,6 +56,6 @@ def show_top_level():
     except subprocess.CalledProcessError:
         return path
 
-
-build_path = path.join(show_top_level(), "kawaii")
+top_level = show_top_level()
+build_path = path.join(top_level, "kawaii")
 cache_path = path.join(build_path, "cache")

@@ -1,6 +1,6 @@
 from typing import *
 import click
-from .build import available_buildsystems
+from .build.buildsystem import available_buildsystems
 class OrderedGroup(click.Group):
     def __init__(self, name=None, commands=None,  **attrs):
         super(OrderedGroup, self).__init__(name, commands, **attrs)
